@@ -1,0 +1,13 @@
+{
+  "name": "autotest",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "supervisor app.js"
+  },
+  "dependencies": {
+    "express": "*",
+    "express-handlebars": "*",
+    "sqlite3" : "*"
+  }
+}
