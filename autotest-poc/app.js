@@ -8,7 +8,7 @@ var bodyParser = require('body-parser');
 var exphbs = require('express-handlebars');
 
 var routes = require('./routes/index');
-var users = require('./routes/users');
+var manage = require('./routes/manage');
 
 var app = express();
 
@@ -19,7 +19,6 @@ app.engine('.hbs', exphbs({
 	}));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', '.hbs');
-//app.set('view engine', 'ejs');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));
@@ -29,8 +28,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
-app.use('/users', users);
+app.use('/base/*', routes);
+app.use('/manage', manage);
 
 start_flow_name = process.argv[2];
 
