@@ -27,7 +27,7 @@ var groupSwitchUnitId = null;
 var groupSwitchUnitRequestPath = null;
 var groupSwitchFlag = false;
 
-var indexInfo = 'It provided mock data by JSON formatted. If you want to add or edit the mock data, please use context "/manage".';
+var indexInfo = 'It provided mock data by JSON formatted.<br />If you want to add or edit the mock data, please use context "/manage".';
 
 function resetCache(flowName) {
   currentFlow = new models.ResponseFlow();
@@ -157,10 +157,8 @@ function getResponseValue(req, res, next) {
   }
 }
 
-
-
 function generateFlowByName(req, res, next, callback) {
-  db.getResponseFlowByName(start_flow_name, req, res, next, function(error, row) {
+  db.getResponseFlowByName(start_flow_name, function(error, row) {
     if (error) {
       var msg = 'Can not find the Flow by name = ' + start_flow_name;
       renderIndexPage(req, res, next, msg);
@@ -201,7 +199,7 @@ router.get('/', function(req, res, next) {
             groupIdSequenceNo = 0;
             getResponseValue(req, res, next);
           } else {
-            var msg = 'Flow Sequence Out of Range! Definition flow sequence group Size is [' + groupIdSequenceArray.length
+            var msg = 'Flow Sequence Out of Range!<br />Definition flow sequence group Size is [' + groupIdSequenceArray.length
                 + '], and call flow count is [' + (groupIdSequenceNo + 1) + ']';
             renderIndexPage(req, res, next, msg);
           }
