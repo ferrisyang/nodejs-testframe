@@ -1,7 +1,6 @@
 /*jshint es5: false */
 
 var util = require('util');
-var util = console;
 var sqlite3 = require('sqlite3');
 var uuid = require('node-uuid');
 
@@ -63,7 +62,6 @@ function updateResponseUnit(responseUnitVO, callback) {
 }
 
 function getResponseUnitByID(id, callback) {
-  console.log("getResponseUnitByID : " + id);
   var didOne = false;
   db.each("select * from response_unit where id = ?;", [ id ], function(error, row) {
     if (error) {
@@ -262,10 +260,8 @@ function getResponseFlowByID(id, callback) {
 }
 
 function getResponseFlowByName(Name, callback) {
-  console.log("getResponseFlowByName POC : " + Name);
   var didOne = false;
   db.each("select * from response_flow where flow_name = ?;", [ Name ], function(error, row) {
-    console.log("getResponseFlowByName DB : " + Name);
     if (error) {
       util.log('FAIL on getResponseFlowByName ' + error);
     }

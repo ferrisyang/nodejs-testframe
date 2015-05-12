@@ -28,8 +28,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/base/*', routes);
 app.use('/manage', manage);
+app.use('/*', routes);
 
 start_flow_name = process.argv[2];
 

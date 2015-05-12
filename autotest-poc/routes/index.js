@@ -22,49 +22,39 @@ var currentResponseMap = new customUtils.Map();
 var currentResponseCallMap = new customUtils.Map();
 
 var groupIdSequenceArray = [];
+var groupIdSequenceNo = 0;
 var groupSwitchUnitId = null;
 var groupSwitchUnitRequestPath = null;
 var groupSwitchFlag = false;
 
-CurrentResponseCallMap_is_expired = false;
+var indexInfo = 'It provided mock data by JSON formatted. If you want to add or edit the mock data, please use context "/manage".';
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  var callPath = req.baseUrl;
-
-  if (CurrentResponseCallMap_is_expired || currentResponseCallMap.isEmpty()) {
-    generateFlowByName(function() {
-      groupIdSequenceArray = currentFlow.group_id_sequence.split(",");
-      groupSwitchUnitId = currentFlow.sequence_switch_unit_id;
-      getResponseValue(req, res, next);
-    });
-  } else {
-    if (groupSwitchFlag || callPath == groupSwitchUnitRequestPath) {
-      getResponseValue(req, res, next);
-    } else {
-      responseWrite(req, res, next);
-    }
+function resetCache(flowName) {
+  currentFlow = new models.ResponseFlow();
+  currentResponseMap = new customUtils.Map();
+  currentResponseCallMap = new customUtils.Map();
+  groupIdSequenceArray = [];
+  groupIdSequenceNo = 0;
+  groupSwitchUnitId = null;
+  groupSwitchUnitRequestPath = null;
+  groupSwitchFlag = false;
+  if (flowName) {
+    start_flow_name = flowName;
   }
-  // res.render('index', {
-  // layout : 'main2',
-  // title : 'Express4',
-  // value : currentResponseCallMap
-  // });
-});
+}
 
-function getResponseValue(req, res, next) {
-  // TBD: group_id_sequence
-  
-  getAllResponsesFromGroup(currentFlow.group_id_sequence, function(list) {
-    // var displayList = [];
-    if (list && list.length > 0) {
-      for (var i = 0; i < list.length; i++) {
-        currentResponseMap.put(list[i].id, list[i]);
-        currentResponseCallMap.put(list[i].request_path, list[i].response_value);
-      }
-    }
-    responseWrite(req, res, next);
+function renderIndexPage(req, res, next, message) {
+  res.render('index', {
+    layout : 'main',
+    title : 'Automation Test Framework',
+    indexInfo : indexInfo,
+    message : message
   });
+}
+
+function responseNotFoundPage(req, res, next) {
+  var NOT_FOUND = "Response Json data is not found.";
+  renderIndexPage(req, res, next, NOT_FOUND);
 }
 
 function responseWrite(req, res, next) {
@@ -72,12 +62,13 @@ function responseWrite(req, res, next) {
   var responseValue = currentResponseCallMap.get(callPath);
   if (responseValue) {
 
-    getResponseUnitById(groupSwitchUnitId, function(responseUnit) {
-      if (groupSwitchUnitId == responseUnit.id) {
+    if (groupSwitchUnitId && !groupSwitchFlag) {
+      var groupSwitchUnit = currentResponseMap.get(groupSwitchUnitId);
+      if (groupSwitchUnit && callPath === groupSwitchUnit.request_path) {
         groupSwitchFlag = true;
-        groupSwitchUnitRequestPath = responseUnit.request_path;
+        groupSwitchUnitRequestPath = groupSwitchUnit.request_path;
       }
-    });
+    }
 
     var body = eval("(" + responseValue + ")");
     body = JSON.stringify(body);
@@ -85,51 +76,24 @@ function responseWrite(req, res, next) {
     res.write(body);
     res.end();
   } else {
-    var NOT_FOUND = "Not Found\n";
-    res.writeHead(404, [ [ "Content-Type", "text/plain" ], [ "Content-Length", NOT_FOUND.length ] ]);
-    res.write(NOT_FOUND);
-    res.end();
+    responseNotFoundPage(req, res, next);
   }
 }
 
-function getAllResponsesFromGroup(groupId, callback) {
-  var responseUnitList = [];
-  getAllResponseIdsFromGroup(groupId, function(list) {
-    console.log("list = " + list);
-    var unitIds = list.unique();
-    console.log("unitIds = " + unitIds);
-    var count = 0;
-    for (var i = 0; i < unitIds.length; i++) {
-      getResponseUnitById(unitIds[i], function(responseUnit) {
-        responseUnitList.push(responseUnit);
-        count++;
-        console.log("responseUnit.id = " + responseUnit.id);
-        console.log("count = " + count);
-        if (count == unitIds.length) {
-          callback(responseUnitList);
-        }
-      });
-    }
-  });
-}
-
-function getAllResponseIdsFromGroup(groupId, callback) {
-
-  console.log("getAllResponsesFromGroup ID : " + groupId);
+function getAllResponseIdsFromGroup(groupId, req, res, next, callback) {
   db.getResponseGroupByID(groupId, function(error, row) {
     if (error) {
-      console.error("Can not find ResponseGroup by id = " + groupId);
+      var msg = 'Can not find ResponseGroup by id = ' + groupId;
+      renderIndexPage(req, res, next, msg);
     } else {
       var unitIDList = [];
       if (row.response_unit_ids) {
         unitIDList = row.response_unit_ids.split(",");
       }
-      console.log("getResponseGroupByID subgroup_ids : " + row.subgroup_ids);
       if (row.subgroup_ids) {
         var subgroup_ids = row.subgroup_ids.split(",");
         for (var i = 0; i < subgroup_ids.length; i++) {
-          getAllResponseIdsFromGroup(subgroup_ids[i], function(list) {
-            console.log("getAllResponsesFromGroup list : " + list);
+          getAllResponseIdsFromGroup(subgroup_ids[i], req, res, next, function(list) {
             unitIDList = unitIDList.concat(list);
             callback(unitIDList);
           });
@@ -141,10 +105,11 @@ function getAllResponseIdsFromGroup(groupId, callback) {
   });
 }
 
-function getResponseUnitById(unitId, callback) {
+function getResponseUnitById(unitId, req, res, next, callback) {
   db.getResponseUnitByID(unitId, function(error, row) {
     if (error) {
-      console.error("Can not find getResponseUnit By Id = " + unitId);
+      var msg = 'Can not find getResponseUnit By Id = ' + unitId;
+      renderIndexPage(req, res, next, msg);
     } else {
       var responseUnit = new models.ResponseUnit();
       responseUnit.id = row.id;
@@ -157,12 +122,49 @@ function getResponseUnitById(unitId, callback) {
   });
 }
 
-function generateFlowByName(callback) {
-  db.getResponseFlowByName(start_flow_name, function(error, row) {
+function getAllResponsesFromGroup(groupId, req, res, next, callback) {
+  var responseUnitList = [];
+  getAllResponseIdsFromGroup(groupId, req, res, next, function(list) {
+    // console.log("list = " + list);
+    var unitIds = list.unique();
+    // console.log("unitIds = " + unitIds);
+    var count = 0;
+    for (var i = 0; i < unitIds.length; i++) {
+      getResponseUnitById(unitIds[i], req, res, next, function(responseUnit) {
+        responseUnitList.push(responseUnit);
+        count++;
+        if (count === unitIds.length) {
+          callback(responseUnitList);
+        }
+      });
+    }
+  });
+}
+
+function getResponseValue(req, res, next) {
+  if (groupIdSequenceArray[groupIdSequenceNo]) {
+    getAllResponsesFromGroup(groupIdSequenceArray[groupIdSequenceNo], req, res, next, function(list) {
+      if (list && list.length > 0) {
+        for (var i = 0; i < list.length; i++) {
+          currentResponseMap.put(list[i].id, list[i]);
+          currentResponseCallMap.put(list[i].request_path, list[i].response_value);
+        }
+      }
+      responseWrite(req, res, next);
+    });
+  } else {
+    responseNotFoundPage(req, res, next);
+  }
+}
+
+
+
+function generateFlowByName(req, res, next, callback) {
+  db.getResponseFlowByName(start_flow_name, req, res, next, function(error, row) {
     if (error) {
-      console.error("Can not find the Flow by name = " + start_flow_name);
+      var msg = 'Can not find the Flow by name = ' + start_flow_name;
+      renderIndexPage(req, res, next, msg);
     } else {
-      console.log("generateFlowByName group_id_sequence: " + row.group_id_sequence);
       currentFlow = {
         id : row.id,
         flow_name : row.flow_name,
@@ -174,5 +176,43 @@ function generateFlowByName(callback) {
     }
   });
 }
+
+/* GET home page. */
+router.get('/', function(req, res, next) {
+  var callPath = req.baseUrl;
+
+  if (!callPath || callPath.length === 0) {
+    renderIndexPage(req, res, next, "");
+  } else {
+    if (currentResponseCallMap.isEmpty()) {
+      generateFlowByName(req, res, next, function() {
+        groupIdSequenceArray = currentFlow.group_id_sequence.split(",");
+        groupSwitchUnitId = currentFlow.sequence_switch_unit_id;
+        getResponseValue(req, res, next);
+      });
+    } else {
+      if (groupSwitchFlag && callPath === groupSwitchUnitRequestPath) {
+        console.log("Group Switch!");
+        currentResponseMap = new customUtils.Map();
+        currentResponseCallMap = new customUtils.Map();
+        groupIdSequenceNo = groupIdSequenceNo + 1;
+        if (groupIdSequenceNo >= groupIdSequenceArray.length) {
+          if (currentFlow.flow_repeat !== 0) {
+            groupIdSequenceNo = 0;
+            getResponseValue(req, res, next);
+          } else {
+            var msg = 'Flow Sequence Out of Range! Definition flow sequence group Size is [' + groupIdSequenceArray.length
+                + '], and call flow count is [' + (groupIdSequenceNo + 1) + ']';
+            renderIndexPage(req, res, next, msg);
+          }
+        } else {
+          getResponseValue(req, res, next);
+        }
+      } else {
+        responseWrite(req, res, next);
+      }
+    }
+  }
+});
 
 module.exports = router;
