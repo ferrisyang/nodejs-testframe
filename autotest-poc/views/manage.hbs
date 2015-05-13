@@ -3,11 +3,14 @@
 <div id="manageIndexDiv">
 	<div id="manageIndexHeaderDiv" style="display: block; margin: 10px 0;">
 		<span style="width: 30%; display: inline-block;">Flow Name: </span> <span
-			style="display: inline-block; width: 60%;"> <select
-			id="flowSelection" style="width: 80%" onchange="selectionSwitch()">
-				<option selected="selected">Default Flow</option>
-				<option>Flow 1</option>
-		</select>
+			style="display: inline-block; width: 60%;"> 
+			{{#if displayAllFlows}}
+			<select	id="flowSelection" style="width: 80%" onchange="selectionSwitch()">
+				{{#each displayAllFlows}}
+				<option value="{{flowId}}">{{flowName}}</option>
+				{{/each}}
+			</select>
+			{{/if}}
 		</span>
 	</div>
 	<div id="manageIndexBodyDiv"

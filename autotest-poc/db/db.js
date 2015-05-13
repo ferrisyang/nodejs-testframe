@@ -1,6 +1,7 @@
 /*jshint es5: false */
 
-var util = require('util');
+//var util = require('util');
+var util = console;
 var sqlite3 = require('sqlite3');
 var uuid = require('node-uuid');
 
