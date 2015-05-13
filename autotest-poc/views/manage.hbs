@@ -1,0 +1,24 @@
+<p>{{{manageInfo}}}</p>
+
+<div id="manageIndexDiv">
+	<div id="manageIndexHeaderDiv" style="display: block; margin: 10px 0;">
+		<span style="width: 30%; display: inline-block;">Flow Name: </span> <span
+			style="display: inline-block; width: 60%;"> <select
+			id="flowSelection" style="width: 80%" onchange="selectionSwitch()">
+				<option selected="selected">Default Flow</option>
+				<option>Flow 1</option>
+		</select>
+		</span>
+	</div>
+	<div id="manageIndexBodyDiv"
+		style="display: block; margin: 10px 0; width: 100%">
+		<div
+			style="float: left; display: block; width: 48%; border: 2px; border-style: solid;">
+			{{> sequenceListView}}</div>
+		<div
+			style="float: left; width: 48%; display: block; border: 2px; border-style: solid; margin-left: 10px">
+			{{> responseUnitListView}}</div>
+	</div>
+</div>
+
+<script type="text/javascript" src="js/static_manage.js"></script>

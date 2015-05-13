@@ -71,10 +71,13 @@ function responseWrite(req, res, next) {
     }
 
     var body = eval("(" + responseValue + ")");
-    body = JSON.stringify(body);
-    res.writeHead(200, [ [ "Content-Type", "text/json" ], [ "Content-Length", body.length ] ]);
-    res.write(body);
-    res.end();
+    res.json(body);
+
+    // body = JSON.stringify(body);
+    // res.writeHead(200, [ [ "Content-Type", "text/json" ], [ "Content-Length",
+    // body.length ] ]);
+    // res.write(body);
+    // res.end();
   } else {
     responseNotFoundPage(req, res, next);
   }
