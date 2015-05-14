@@ -1,3 +1,15 @@
+Array.prototype.unique = function() {
+  var temp = new Array();
+  this.sort();
+  for (i = 0; i < this.length; i++) {
+    if (this[i] == this[i + 1]) {
+      continue;
+    }
+    temp[temp.length] = this[i];
+  }
+  return temp;
+}
+
 var express = require('express');
 var router = express.Router();
 
@@ -20,6 +32,8 @@ var tempObject = {
 };
 
 var displayObject = {
+  currentFlowRepeat : false,
+  currentGroupName: null,
   displayFlowSequenceGroups : [],
   displayGroupUnits : []
 };
@@ -37,6 +51,8 @@ function refreshData() {
     currentGroupUnitsMap : new customUtils.Map()
   };
   displayObject = {
+    currentFlowRepeat : false,
+    currentGroupName: null,
     displayFlowSequenceGroups : [],
     displayGroupUnits : []
   };
@@ -50,6 +66,7 @@ function getAllFlows(callback) {
       for (var i = 0; i < list.length; i++) {
         var obj = {
           flowId : list[i].id,
+          currentSelected : false,
           flowName : list[i].flow_name
         };
         displayAllFlows.push(obj);
@@ -80,7 +97,7 @@ function getGroupsById(groupId, callback) {
 
       if (row.response_unit_ids) {
         var unitIDList = row.response_unit_ids.split(",");
-        tempObject.currentGroupUnitIds.concat(unitIDList);
+        tempObject.currentGroupUnitIds = tempObject.currentGroupUnitIds.concat(unitIDList);
       }
 
       if (row.subgroup_ids) {
@@ -118,11 +135,9 @@ function getResponseUnitById(unitId, callback) {
     if (error) {
       var msg = 'Can not find ResponseUnit by id = ' + unitId;
       console.error(msg);
-    } else {
-      tempObject.currentGroupUnitsMap.put(unitId, row);
     }
     if (callback) {
-      callback();
+      callback(row);
     }
   });
 }
@@ -130,20 +145,17 @@ function getResponseUnitById(unitId, callback) {
 // Click Group
 function getCurrentGroupResponseUtils(groupId, callback) {
   getGroupsById(groupId, function() {
-    var unitIds = tempObject.currentGroupUnitIds;
+    var unitIds = tempObject.currentGroupUnitIds.unique();
     var count = 0;
     for (var i = 0; i < unitIds.length; i++) {
       var unitId = unitIds[i];
-      getResponseUnitById(unitId, function() {
+      getResponseUnitById(unitId, function(row) {
         count++;
-        var itemKeys = tempObject.currentGroupUnitsMap.keys();
-        for (var i = 0; i < itemKeys.length; i++) {
-          var obj = {
-            unitId : itemKeys[i],
-            unitName : tempObject.currentGroupUnitsMap.get(itemKeys[i])
-          };
-          displayObject.displayGroupUnits.push(obj);
-        }
+        var obj = {
+          unitId : row.id,
+          unitName : row.unit_name
+        };
+        displayObject.displayGroupUnits.push(obj);
         if (count === unitIds.length && callback) {
           callback();
         }
@@ -163,11 +175,13 @@ function getCurrentFlow(flowId, callback) {
   }
   getFlowById(function() {
     getFlowGroups(function() {
-      var itemKeys = tempObject.currentSequenceGroups.keys();
+      var itemKeys = tempObject.currentFlow.group_id_sequence.split(",");
       for (var i = 0; i < itemKeys.length; i++) {
         var obj = {
+          order : i + 1,
+          currentSelected : false,
           groupId : itemKeys[i],
-          groupName : tempObject.currentSequenceGroups.get(itemKeys[i])
+          groupName : tempObject.currentSequenceGroups.get(itemKeys[i]).group_name
         };
         displayObject.displayFlowSequenceGroups.push(obj);
       }
@@ -191,19 +205,62 @@ function renderManagePage(req, res, next) {
 /* Manage Page. */
 router.get('/', function(req, res, next) {
   console.log('Manage Request BaseURL = ' + req.baseUrl);
+  refreshData();
+  displayAllFlows = [];
   getAllFlows(function() {
     getCurrentFlow(DEFAULT_FLOW_ID, function() {
+      displayObject.currentFlowRepeat = tempObject.currentFlow.flow_repeat == 0 ? false : true;
       renderManagePage(req, res, next);
     });
   });
 });
 
 router.post('/', function(req, res, next) {
-  refreshData();
   var paramsJson = req.body;
-  console.log('Manage Post BaseURL = ' + req.baseUrl);
-  console.log('Manage Post paramsJson = ' + JSON.stringify(paramsJson));
-  renderManagePage(req, res, next);
+  if (paramsJson.flowId) {
+    refreshData();
+
+    for (var i = 0; i < displayAllFlows.length; i++) {
+      if (paramsJson.flowId === displayAllFlows[i].flowId) {
+        displayAllFlows[i].currentSelected = true;
+      } else {
+        displayAllFlows[i].currentSelected = false;
+      }
+    }
+
+    getCurrentFlow(paramsJson.flowId, function() {
+      displayObject.currentFlowRepeat = tempObject.currentFlow.flow_repeat == 0 ? false : true;
+      renderManagePage(req, res, next);
+    });
+
+  } else if (paramsJson.groupId) {
+    tempObject.currentGroupUnitIds = [];
+    displayObject.displayGroupUnits = [];
+    tempObject.currentGroupUnitsMap = new customUtils.Map();
+    for (var i = 0; i < displayObject.displayFlowSequenceGroups.length; i++) {
+      if (displayObject.displayFlowSequenceGroups[i].groupId === paramsJson.groupId) {
+        displayObject.displayFlowSequenceGroups[i].currentSelected = true;
+        displayObject.currentGroupName = displayObject.displayFlowSequenceGroups[i].groupName;
+      } else {
+        displayObject.displayFlowSequenceGroups[i].currentSelected = false;
+      }
+    }
+    getCurrentGroupResponseUtils(paramsJson.groupId, function() {
+
+      var unitOrder = tempObject.currentGroupUnitIds.unique();
+      var tempMap = [];
+      for (var i = 0; i < unitOrder.length; i++) {
+        for (var j = 0; j < displayObject.displayGroupUnits.length; j++) {
+          if (unitOrder[i] === displayObject.displayGroupUnits[j].unitId) {
+            tempMap.push(displayObject.displayGroupUnits[j]);
+          }
+        }
+      }
+
+      displayObject.displayGroupUnits = tempMap;
+      renderManagePage(req, res, next);
+    });
+  }
 });
 
 module.exports = router;

@@ -2,16 +2,25 @@
 <table id="responseUnitListViewTable" border="1" style="width: 100%">
 	<thead>
 		<tr>
-			<th style="text-align: center;">Group Included Response Items
-				Name</th>
+			<th style="text-align: center;">
+			<span style="background-color: orange; display: inline-block; width: 100%">
+			{{#if displayObject.currentGroupName}}
+				{{displayObject.currentGroupName}}
+			{{else}}
+				Group Name
+			{{/if}}
+			</span>
+				Included Response Items Name
+			</th>
 		</tr>
 	</thead>
+	{{#if displayObject.displayGroupUnits}}
 	<tbody>
+		{{#each displayObject.displayGroupUnits}}
 		<tr>
-			<td style="text-align: center;">Login Success</td>
+			<td style="text-align: center;">{{unitName}}</td>
 		</tr>
-		<tr>
-			<td style="text-align: center;">Logout Success</td>
-		</tr>
+		{{/each}}
 	</tbody>
+	{{/if}}
 </table>

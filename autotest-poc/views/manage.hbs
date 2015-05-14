@@ -2,25 +2,28 @@
 
 <div id="manageIndexDiv">
 	<div id="manageIndexHeaderDiv" style="display: block; margin: 10px 0;">
-		<span style="width: 30%; display: inline-block;">Flow Name: </span> <span
-			style="display: inline-block; width: 60%;"> 
-			{{#if displayAllFlows}}
-			<select	id="flowSelection" style="width: 80%" onchange="selectionSwitch()">
+		<span style="width: 30%; display: inline-block;">Flow Name: </span>
+		<span style="display: inline-block; width: 60%;">
+			{{#if displayAllFlows}} 
+			<select id="flowSelection" style="width: 80%" onchange="selectionSwitch(this.value)">
 				{{#each displayAllFlows}}
-				<option value="{{flowId}}">{{flowName}}</option>
+				<option value="{{flowId}}" {{#if currentSelected}}selected="selected"{{/if}}>{{flowName}}</option> 
 				{{/each}}
-			</select>
+			</select> 
 			{{/if}}
 		</span>
+		<div>
+			<span style="width: 30%; display: inline-block;">Flow Repeat: </span>
+			<span style="width: 60%; display: inline-block;">{{#if displayObject.currentFlowRepeat}}YES{{else}}NO{{/if}}</span>
+		</div>
 	</div>
-	<div id="manageIndexBodyDiv"
-		style="display: block; margin: 10px 0; width: 100%">
-		<div
-			style="float: left; display: block; width: 48%; border: 2px; border-style: solid;">
-			{{> sequenceListView}}</div>
-		<div
-			style="float: left; width: 48%; display: block; border: 2px; border-style: solid; margin-left: 10px">
-			{{> responseUnitListView}}</div>
+	<div id="manageIndexBodyDiv" style="display: block; margin: 10px 0; width: 100%">
+		<div style="float: left; display: block; width: 48%; border: 2px; border-style: solid;">
+			{{> sequenceListView}}
+		</div>
+		<div style="float: left; width: 48%; display: block; border: 2px; border-style: solid; margin-left: 10px">
+			{{> responseUnitListView}}
+		</div>
 	</div>
 </div>
 

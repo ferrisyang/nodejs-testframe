@@ -1,29 +1,35 @@
 function post(path, params, method) {
-    method = method || "post"; // Set method to post by default if not specified.
+  method = method || "post"; // Set method to post by default if not specified.
 
-    // The rest of this code assumes you are not using a library.
-    // It can be made less wordy if you use one.
-    var form = document.createElement("form");
-    form.setAttribute("method", method);
-    form.setAttribute("action", path);
+  // The rest of this code assumes you are not using a library.
+  // It can be made less wordy if you use one.
+  var form = document.createElement("form");
+  form.setAttribute("method", method);
+  form.setAttribute("action", path);
 
-    for(var key in params) {
-        if(params.hasOwnProperty(key)) {
-            var hiddenField = document.createElement("input");
-            hiddenField.setAttribute("type", "hidden");
-            hiddenField.setAttribute("name", key);
-            hiddenField.setAttribute("value", params[key]);
+  for ( var key in params) {
+    if (params.hasOwnProperty(key)) {
+      var hiddenField = document.createElement("input");
+      hiddenField.setAttribute("type", "hidden");
+      hiddenField.setAttribute("name", key);
+      hiddenField.setAttribute("value", params[key]);
 
-            form.appendChild(hiddenField);
-         }
+      form.appendChild(hiddenField);
     }
+  }
 
-    document.body.appendChild(form);
-    form.submit();
+  document.body.appendChild(form);
+  form.submit();
 }
 
-
-function selectionSwitch(){
-  post('/manage' , {flowName: 'flow1'})
+function selectionSwitch(flowId) {
+  post('/manage', {
+    flowId : flowId
+  });
 }
 
+function changeGroupUnits(groupId) {
+  post('/manage', {
+    groupId : groupId
+  });
+}
