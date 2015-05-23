@@ -8,6 +8,9 @@ var app = require('../app');
 var debug = require('debug')('autotest-poc:server');
 var http = require('http');
 
+var record = require('../routes/record');
+var httpProxy = require('http-proxy');
+
 /**
  * Get port from environment and store in Express.
  */
@@ -93,3 +96,18 @@ function onListening() {
   console.log('Start Flow Name: ' + start_flow_name);
   console.log('Listening on ' + bind);
 }
+
+
+var proxy = httpProxy.createProxyServer({target:'http://localhost:9000'}).listen(4000);
+
+proxy.on('proxyReq', function(proxyReq, req, res, options) {
+  var unitKey = req.url;
+  var unitValue = "";
+  proxyReq.on('data', function(d){
+    unitValue += d;
+  }).on('end', function(){
+    record.recordResponseUnit(unitKey, unitValue, function(){
+      console.log("Recode process Done, key = " + unitKey);
+    });
+  });
+});

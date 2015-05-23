@@ -64,9 +64,9 @@ function responseWrite(req, res, next) {
 
     if (groupSwitchUnitId && !groupSwitchFlag) {
       var groupSwitchUnit = currentResponseMap.get(groupSwitchUnitId);
-      if (groupSwitchUnit && callPath === groupSwitchUnit.request_path) {
+      if (groupSwitchUnit && callPath === groupSwitchUnit.unit_key) {
         groupSwitchFlag = true;
-        groupSwitchUnitRequestPath = groupSwitchUnit.request_path;
+        groupSwitchUnitRequestPath = groupSwitchUnit.unit_key;
       }
     }
 
@@ -116,10 +116,11 @@ function getResponseUnitById(unitId, req, res, next, callback) {
     } else {
       var responseUnit = new models.ResponseUnit();
       responseUnit.id = row.id;
-      responseUnit.unit_type = row.unit_type;
+      responseUnit.unit_category = row.unit_category;
       responseUnit.unit_name = row.unit_name;
-      responseUnit.request_path = row.request_path;
-      responseUnit.response_value = row.response_value;
+      responseUnit.unit_key = row.unit_key;
+      responseUnit.unit_value = row.unit_value;
+      responseUnit.unit_origin = row.unit_origin;
       callback(responseUnit);
     }
   });
@@ -150,7 +151,7 @@ function getResponseValue(req, res, next) {
       if (list && list.length > 0) {
         for (var i = 0; i < list.length; i++) {
           currentResponseMap.put(list[i].id, list[i]);
-          currentResponseCallMap.put(list[i].request_path, list[i].response_value);
+          currentResponseCallMap.put(list[i].unit_key, list[i].unit_value);
         }
       }
       responseWrite(req, res, next);

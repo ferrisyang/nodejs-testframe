@@ -1,10 +1,11 @@
 function ResponseUnit() {
   return {
     id : null,
-    unit_type : null,
+    unit_category : null,
     unit_name : null,
-    request_path : null,
-    response_value : null
+    unit_key : null,
+    unit_value : null,
+    unit_origin : null
   };
 }
 
@@ -13,7 +14,8 @@ function ResponseGroup() {
     id : null,
     group_name : null,
     subgroup_ids : null,
-    response_unit_ids : null
+    response_unit_ids : null,
+    is_order : false
   };
 }
 
@@ -27,6 +29,15 @@ function ResponseFlow() {
   };
 }
 
+function ResponseUnitType() {
+  return {
+    id : null,
+    type_name : null,
+    type_code : null
+  }
+}
+
 exports.ResponseUnit = ResponseUnit;
 exports.ResponseGroup = ResponseGroup;
 exports.ResponseFlow = ResponseFlow;
+exports.ResponseUnitType = ResponseUnitType;

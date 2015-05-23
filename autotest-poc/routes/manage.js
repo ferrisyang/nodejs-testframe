@@ -16,7 +16,6 @@ var router = express.Router();
 var db = require('../db/db');
 var models = require('../models/models');
 var customUtils = require('../utils/utils');
-var indexRoute = require('./index');
 
 var DEFAULT_FLOW_ID = "1";
 var allFlows = [];
@@ -205,6 +204,7 @@ function renderManagePage(req, res, next) {
 /* Manage Page. */
 router.get('/', function(req, res, next) {
   console.log('Manage Request BaseURL = ' + req.baseUrl);
+//  res.render('admin');
   refreshData();
   displayAllFlows = [];
   getAllFlows(function() {

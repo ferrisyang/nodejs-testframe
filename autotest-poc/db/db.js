@@ -4,30 +4,34 @@
 var util = console;
 var sqlite3 = require('sqlite3');
 var uuid = require('node-uuid');
+var models = require('../models/models');
 
 var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database('./db/test.db3', function(error){
-  if(error){
+var db = new sqlite3.Database('./db/test.db3', function(error) {
+  if (error) {
     console.log("Connect to DB Error : " + error);
   }
 });
 
 // ResponseUnit
 function insertResponseUnit(responseUnitVO, callback) {
-  db.run("insert into response_unit (id, unit_type, unit_name, request_path, response_value) values (?,?,?,?,?);", [
-      uuid.v4(), responseUnitVO.unit_type, responseUnitVO.unit_name, responseUnitVO.request_path,
-      responseUnitVO.response_value ], function(error) {
-    if (error) {
-      util.log('FAIL on add ResponseUnit ' + error);
-    }
-    if (callback) {
-      if (error) {
-        callback(error);
-      } else {
-        callback();
-      }
-    }
-  });
+  var unitId = uuid.v4();
+  db
+      .run(
+          "insert into response_unit (id, unit_category, unit_name, unit_key, unit_value, unit_origin) values (?,?,?,?,?,?);",
+          [ unitId, responseUnitVO.unit_category, responseUnitVO.unit_name, responseUnitVO.unit_key,
+              responseUnitVO.unit_value, responseUnitVO.unit_origin ], function(error) {
+            if (error) {
+              util.log('FAIL on add ResponseUnit ' + error);
+            }
+            if (callback) {
+              if (error) {
+                callback(error);
+              } else {
+                callback(null, unitId);
+              }
+            }
+          });
 }
 
 function deleteResponseUnit(id, callback) {
@@ -46,20 +50,20 @@ function deleteResponseUnit(id, callback) {
 }
 
 function updateResponseUnit(responseUnitVO, callback) {
-  db.run("update response_unit set unit_type=?, unit_name=?, request_path=?, response_value=? where id=?;", [
-      responseUnitVO.unit_type, responseUnitVO.unit_name, responseUnitVO.request_path, responseUnitVO.response_value,
-      responseUnitVO.id ], function(error) {
-    if (error) {
-      util.log('FAIL on update ResponseUnit ' + error);
-    }
-    if (callback) {
-      if (error) {
-        callback(error);
-      } else {
-        callback();
-      }
-    }
-  });
+  db.run("update response_unit set unit_category=?, unit_name=?, unit_key=?, unit_value=?, unit_origin=? where id=?;",
+      [ responseUnitVO.unit_category, responseUnitVO.unit_name, responseUnitVO.unit_key, responseUnitVO.unit_value,
+          responseUnitVO.unit_origin, responseUnitVO.id ], function(error) {
+        if (error) {
+          util.log('FAIL on update ResponseUnit ' + error);
+        }
+        if (callback) {
+          if (error) {
+            callback(error);
+          } else {
+            callback();
+          }
+        }
+      });
 }
 
 function getResponseUnitByID(id, callback) {
@@ -102,19 +106,21 @@ function getResponseUnitAllforEach(doEach, callback) {
 
 // ResponseGroup
 function insertResponseGroup(responseGroupVO, callback) {
-  db.run("insert into response_group (id, group_name, subgroup_ids, response_unit_ids) values (?,?,?,?);", [ uuid.v4(),
-      responseGroupVO.group_name, responseGroupVO.subgroup_ids, responseGroupVO.response_unit_ids ], function(error) {
-    if (error) {
-      util.log('FAIL on add ResponseGroup ' + error);
-    }
-    if (callback) {
-      if (error) {
-        callback(error);
-      } else {
-        callback();
-      }
-    }
-  });
+  var groupId = uuid.v4();
+  db.run("insert into response_group (id, group_name, subgroup_ids, response_unit_ids, is_order) values (?,?,?,?,?);",
+      [ groupId, responseGroupVO.group_name, responseGroupVO.subgroup_ids, responseGroupVO.response_unit_ids,
+          responseGroupVO.is_order ], function(error) {
+        if (error) {
+          util.log('FAIL on add ResponseGroup ' + error);
+        }
+        if (callback) {
+          if (error) {
+            callback(error);
+          } else {
+            callback(null, groupId);
+          }
+        }
+      });
 }
 
 function deleteResponseGroup(id, callback) {
@@ -133,21 +139,47 @@ function deleteResponseGroup(id, callback) {
 }
 
 function updateResponseGroup(responseGroupVO, callback) {
-  db
-      .run("update response_group set group_name=?, subgroup_ids=?, response_unit_ids=? where id=?;", [
-          responseGroupVO.group_name, responseGroupVO.subgroup_ids, responseGroupVO.response_unit_ids,
-          responseGroupVO.id ], function(error) {
-        if (error) {
-          util.log('FAIL on update ResponseGroup ' + error);
-        }
-        if (callback) {
-          if (error) {
-            callback(error);
-          } else {
-            callback();
-          }
-        }
-      });
+  db.run("update response_group set group_name=?, subgroup_ids=?, response_unit_ids=?, is_order=? where id=?;", [
+      responseGroupVO.group_name, responseGroupVO.subgroup_ids, responseGroupVO.response_unit_ids,
+      responseGroupVO.is_order, responseGroupVO.id ], function(error) {
+    if (error) {
+      util.log('FAIL on update ResponseGroup ' + error);
+    }
+    if (callback) {
+      if (error) {
+        callback(error);
+      } else {
+        callback();
+      }
+    }
+  });
+}
+
+function addResponseGroupUnitIds(id, unitIds, callback) {
+  getResponseGroupByID(id, function(error, row) {
+    if (error) {
+      util.log('FAIL on getResponseGroupByID ' + error);
+    } else {
+      var group = new models.ResponseGroup();
+      group.id = row.id;
+      group.response_unit_ids = row.response_unit_ids + "," + unitIds;
+
+      db.run("update response_group set response_unit_ids=? where id=?;", [ group.response_unit_ids, group.id ],
+          function(error) {
+            if (error) {
+              util.log('FAIL on update ResponseGroup ' + error);
+            }
+            if (callback) {
+              if (error) {
+                callback(error);
+              } else {
+                callback();
+              }
+            }
+          });
+    }
+  })
+
 }
 
 function getResponseGroupByID(id, callback) {
@@ -307,6 +339,7 @@ exports.getResponseUnitAllforEach = getResponseUnitAllforEach;
 exports.insertResponseGroup = insertResponseGroup;
 exports.deleteResponseGroup = deleteResponseGroup;
 exports.updateResponseGroup = updateResponseGroup;
+exports.addResponseGroupUnitIds = addResponseGroupUnitIds;
 exports.getResponseGroupByID = getResponseGroupByID;
 exports.getResponseGroupAllInArray = getResponseGroupAllInArray;
 exports.getResponseGroupAllforEach = getResponseGroupAllforEach;
